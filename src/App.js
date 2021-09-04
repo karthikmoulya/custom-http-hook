@@ -1,25 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from 'react';
+import useHttp from './components/hooks/use-http';
+import NewTask from './components/NewTask/NewTask';
+import Tasks from './components/Tasks/Tasks';
 
-function App() {
+const App = () => {
+  const [tasks, setTasks] = useState([]);
+
+  const { isLoading, error, sendRequest: fetchTasks } = useHttp();
+
+  useEffect(() => {
+    const transformTasks = taskObj => {
+      const loadedTasks = [];
+
+      for (const taskKey in taskObj) {
+        loadedTasks.push({ id: taskKey, text: taskObj[taskKey].text });
+      }
+
+      setTasks(loadedTasks);
+    };
+    fetchTasks(
+      {
+        url: 'https://react-http-348f1-default-rtdb.firebaseio.com/tasks.json',
+      },
+      transformTasks
+    );
+  }, [fetchTasks]);
+
+  const taskAddHandler = task => {
+    setTasks(prevTasks => prevTasks.concat(task));
+  };
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <NewTask onAddTask={taskAddHandler} />
+      <Tasks
+        items={tasks}
+        loading={isLoading}
+        error={error}
+        onFetch={fetchTasks}
+      />
+    </>
   );
-}
+};
 
 export default App;
